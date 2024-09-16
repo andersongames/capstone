@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Event Details</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+        <style>
+            .status-accepted {
+                color: green;
+            }
+
+            .status-rejected {
+                color: red;
+            }
+
+            .status-canceled {
+                color: red;
+            }
+
+            .status-pending {
+                color: orange;
+            }
+        </style>
+        <script>
+            // this function copies the value of the input field with the ID event_link to the clipboard
+            function copyLink() {
+                const copyText = document.getElementById("event_link");
+                copyText.select();
+                document.execCommand("copy");
+                alert("Link copied to clipboard!");
+            }
+
+            // this function generates the event link based on the current URL and the event id
+            function generateCreateEventLink(inputElem) {
+                // get the current URL
+                const currentURL = window.location.href;
+
+                // update the input field with the new URL
+                inputElem.value = currentURL;
+            }
+
+            // perform the actions when the page is loaded
+            document.addEventListener("DOMContentLoaded", function() {
+                // generate the create event link
+                const inputElem = document.getElementById("event_link");
+                if (inputElem) {
+                    generateCreateEventLink(inputElem);
+                }
+
+                // add listener to copy link button
+                const copyButton = document.querySelector('.btn-copy-link');
+                if (copyButton) {
+                    copyButton.addEventListener("click", copyLink);
+                }
+            });
+        </script>
+    </head>
+
+    <body>
+        <div class="container mt-4">
+            {% if event.status == 'accepted' %}
+                <h2>Event scheduled</h2>
+            {% elif event.status == 'rejected' %}
+                <h2>Event rejected</h2>
+            {% elif event.status == 'canceled' %}
+                <h2>Event canceled</h2>
+            {% elif event.status == 'pending' %}
+                <h2>Event awaiting approval</h2>
+            {% endif %}
+
+            <div class="form-group">
+                <p>You can use the link below to track the status of the event:</p>
+                <div class="input-group">
+                    <input type="text" id="event_link" class="form-control" value="Loading..." readonly>
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary btn-copy-link" type="button">Copy Link</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">{{ event.subject }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ event.date_time|date:"Y-m-d H:i" }}</h6>
+                    <p><strong>Scheduling with:</strong> {{ event.user.username }}</p>
+                    <p><strong>Location:</strong>
+                        {% if event.location %}
+                            {{ event.location }}
+                        {% else %}
+                            {% if event.status == 'accepted' %}
+                                Location will appear when the event is accepted.
+                            {% else %}
+                                Not yet set
+                            {% endif %}
+                        {% endif %}
+                    </p>
+                    <p><strong>Requested by:</strong> {{ event.name }}</p>
+                    <p><strong>Email:</strong> {{ event.email }}</p>
+                    <p><strong>Description:</strong> {{ event.description|default:"No description provided" }}</p>
+                    <p><strong>Status:</strong>
+                        <span class="{% if event.status == 'accepted' %}status-accepted{% elif event.status == 'rejected' %}status-rejected{% elif event.status == 'canceled' %}status-canceled{% elif event.status == 'pending' %}status-pending{% endif %}">
+                            {{ event.get_status_display }}
+                        </span>
+                    </p>
+                    {% if event.status in 'canceled rejected' and event.reason %}
+                        <p><strong>Reason:</strong> {{ event.reason }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </body>
+
+</html>

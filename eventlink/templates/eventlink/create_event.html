@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Create Event</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
+        <style>
+            .slot-container {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .slot-container label {
+                display: flex;
+                align-items: center;
+                cursor: pointer;
+                flex: 1 1 120px;
+                margin-left: 22px;
+            }
+
+            .form-check-label {
+                display: flex;
+                align-items: center;
+            }
+        </style>
+        <script>
+            function updateSlots() {
+                const date = document.getElementById('event_date').value;
+                const slotsContainer = document.getElementById('slots');
+                slotsContainer.innerHTML = '';
+
+                const timeSlots = JSON.parse('{{ time_slots | escapejs }}');
+                console.log(timeSlots, date)
+                const availableSlots = timeSlots[date] || [];
+
+                if (availableSlots.length === 0) {
+                    slotsContainer.innerHTML = '<div class="alert alert-info" role="alert">No scheduling available on this day.</div>';
+                    return;
+                }
+
+                availableSlots.forEach(function(slot) {
+                    const slotId = 'slot_' + slot;
+                    const label = document.createElement('label');
+                    label.classList.add('form-check-label');
+
+                    const input = document.createElement('input');
+                    input.type = 'radio';
+                    input.name = 'event_time';
+                    input.value = slot;
+                    input.id = slotId;
+                    input.classList.add('form-check-input');
+
+                    label.appendChild(input);
+                    label.appendChild(document.createTextNode(' ' + slot));
+
+                    slotsContainer.appendChild(label);
+                });
+            }
+
+            // call updateSlots on page load to show slots for the first available date
+            document.addEventListener('DOMContentLoaded', function() {
+                updateSlots();
+            });
+        </script>
+    </head>
+
+    <body>
+        <div class="container">
+            <h2>Schedule event with:</h2>
+            <!-- Error message -->
+            {% if error %}
+                <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                </div>
+            {% endif %}
+
+            <div class="row">
+                <!-- User Information Column -->
+                <div class="col-md-4">
+                    <h3>{{ user.username }}</h3>
+                    <p>{{ user.description }}</p>
+                    <p><strong>Available Days:</strong> {{ config.days_availability|join:", " }}</p>
+                    <p><strong>Available Time Range:</strong> {{ config.initial_time }} to {{ config.end_time }}</p>
+                    <p><strong>Event Duration:</strong> {{ config.event_duration }}</p>
+                    <p><strong>Max Days Ahead:</strong> {{ config.max_days_ahead }}</p>
+                </div>
+
+                <!-- Event Creation Form Column -->
+                <div class="col-md-8">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="subject">Event Subject</label>
+                            <input type="text" class="form-control" id="subject" name="subject" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="description">Description (optional)</label>
+                            <textarea class="form-control" id="description" name="description"></textarea>
+                        </div>
+                        <div class="row form-group">
+                            <div class="col-md-6">
+                                <label for="name">Your name</label>
+                                <input type="text" class="form-control" id="name" name="name">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="email">Your email</label>
+                                <input type="email" class="form-control" id="email" name="email">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="event_date">Date</label>
+                            <input type="date" class="form-control" id="event_date" name="event_date" value="{{ first_available_date }}" min="{{ current_date }}" max="{{ max_date }}" onchange="updateSlots()" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="slots">Time</label>
+                            <div id="slots" class="slot-container"></div>
+                        </div>
+                        <div class="d-flex justify-content-end mb-2">
+                            <button type="submit" class="btn btn-primary">Create Event</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </body>
+
+</html>

@@ -1,0 +1,94 @@
+{% extends "eventlink/layout.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block body %}
+    <h2>Profile</h2>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" class="form-control" id="name" name="name" value="{{ user.username }}" required>
+        </div>
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea class="form-control" id="description" name="description" placeholder="Provide a description for yourself or your company">{{ user.description }}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="name">Default Location</label>
+            <input type="text" class="form-control" id="default_location" name="default_location" placeholder="A default location where new events will occur" value="{{ user.default_location }}">
+        </div>
+        <div class="form-group">
+            <label>Days Availability</label><br>
+            <div class="row days-checkboxes">
+                <div class="col">
+                    <label><input type="checkbox" name="days_availability" value="Monday" {% if "Monday" in availability_config.days_availability %}checked{% endif %}> Monday</label>
+                </div>
+                <div class="col">
+                    <label><input type="checkbox" name="days_availability" value="Tuesday" {% if "Tuesday" in availability_config.days_availability %}checked{% endif %}> Tuesday</label>
+                </div>
+                <div class="col">
+                    <label><input type="checkbox" name="days_availability" value="Wednesday" {% if "Wednesday" in availability_config.days_availability %}checked{% endif %}> Wednesday</label>
+                </div>
+                <div class="col">
+                    <label><input type="checkbox" name="days_availability" value="Thursday" {% if "Thursday" in availability_config.days_availability %}checked{% endif %}> Thursday</label>
+                </div>
+                <div class="col">
+                    <label><input type="checkbox" name="days_availability" value="Friday" {% if "Friday" in availability_config.days_availability %}checked{% endif %}> Friday</label>
+                </div>
+                <div class="col">
+                    <label><input type="checkbox" name="days_availability" value="Saturday" {% if "Saturday" in availability_config.days_availability %}checked{% endif %}> Saturday</label>
+                </div>
+                <div class="col">
+                    <label><input type="checkbox" name="days_availability" value="Sunday" {% if "Sunday" in availability_config.days_availability %}checked{% endif %}> Sunday</label>
+                </div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Availability Times</label><br>
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="initial_time">Initial Time</label>
+                    <input type="time" class="form-control" id="initial_time" name="initial_time" value="{{ initial_time }}">
+                </div>
+                <div class="col-md-6">
+                    <label for="end_time">End Time</label>
+                    <input type="time" class="form-control" id="end_time" name="end_time" value="{{ end_time }}">
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col-md-6">
+                <label for="event_duration">Event Duration (in minutes)</label>
+                <input type="number" class="form-control" id="event_duration" name="event_duration" value="{{ event_duration }}" min="1" step="1" required>
+            </div>
+            <div class="form-group col-md-6">
+                <label for="max_days_ahead">Max Days Ahead</label>
+                <input type="number" class="form-control" id="max_days_ahead" name="max_days_ahead" value="{{ max_days_ahead }}" min="1" step="1" required>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Update Profile</button>
+        </div>
+        {% if error %}
+            <div class="alert alert-danger mt-3">
+                {{ error }}
+            </div>
+        {% endif %}
+    </form>
+
+    {% if availability_config.initial_time and availability_config.end_time %}
+        <h3 class="mt-4">Share Your Event Booking Link</h3>
+        <div class="form-group">
+            <label for="event_link">Event Booking Link</label>
+            <div class="input-group">
+                <input type="text" id="event_link" class="form-control" value="{% url 'create_event' user.id %}" readonly>
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary btn-copy-link" type="button">Copy Link</button>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <h3>Set your availability settings to generate the event creation link</h3>
+    {% endif %}
+{% endblock %}

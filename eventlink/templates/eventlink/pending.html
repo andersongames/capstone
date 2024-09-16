@@ -1,0 +1,143 @@
+{% extends "eventlink/layout.html" %}
+
+{% block title %}Pending Events{% endblock %}
+
+{% block body %}
+    <h2>Pending Events</h2>
+    {% if error %}
+        <div class="alert alert-danger" role="alert">
+            {{ error }}
+        </div>
+    {% endif %}
+
+    {% if page_obj %}
+        <div class="row">
+            {% for event in page_obj %}
+                <div class="col-md-12 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ event.subject }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">{{ event.date_time|date:"Y-m-d H:i" }}</h6>
+                            <p class="card-text">{{ event.description }}</p>
+                            <p><strong>Requested by:</strong> {{ event.name }} ({{ event.email }})</p>
+                            <div class="d-flex justify-content-end">
+                                <button class="btn btn-success mr-2" onclick="openModal('acceptModal{{ event.id }}', '{{ event.subject }}', '{{ event.name }}', '{{ event.email }}')">Accept</button>
+                                <button class="btn btn-danger" onclick="openModal('rejectModal{{ event.id }}', '{{ event.subject }}', '{{ event.name }}', '{{ event.email }}')">Reject</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+    <!-- Accept Modal -->
+                <div class="modal" id="acceptModal{{ event.id }}">
+                    <div class="modal-backdrop"></div>
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Confirm Acceptance</h5>
+                                <button type="button" class="close" onclick="closeModal('acceptModal{{ event.id }}')">&times;</button>
+                            </div>
+                            <form method="post" action="{% url 'pending' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="event_id" value="{{ event.id }}">
+                                <input type="hidden" name="action" value="accept">
+                                <div class="modal-body">
+                                    <p><strong>Event:</strong> <span id="eventNameAccept{{ event.id }}"></span></p>
+                                    <p><strong>Requested by:</strong> <span id="eventOrganizerAccept{{ event.id }}"></span></p>
+                                    <div class="form-group">
+                                        <label for="location_{{ event.id }}">Location</label>
+                                        <input type="text" class="form-control" id="location_{{ event.id }}" name="location" value="{{ default_location }}" required>
+                                    </div>
+                                    <p>Are you sure you want to accept this event?</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" onclick="closeModal('acceptModal{{ event.id }}')">Cancel</button>
+                                    <button type="submit" class="btn btn-success">Accept</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+    <!-- Reject Modal -->
+                <div class="modal" id="rejectModal{{ event.id }}">
+                    <div class="modal-backdrop"></div>
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Confirm Rejection</h5>
+                                <button type="button" class="close" onclick="closeModal('rejectModal{{ event.id }}')">&times;</button>
+                            </div>
+                            <form method="post" action="{% url 'pending' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="event_id" value="{{ event.id }}">
+                                <input type="hidden" name="action" value="reject">
+                                <div class="modal-body">
+                                    <p><strong>Event:</strong> <span id="eventNameReject{{ event.id }}"></span></p>
+                                    <p><strong>Requested by:</strong> <span id="eventOrganizerReject{{ event.id }}"></span></p>
+                                    <div class="form-group">
+                                        <label for="reason_{{ event.id }}">Reason for Rejection</label>
+                                        <textarea class="form-control" id="reason_{{ event.id }}" name="reason" rows="3" required></textarea>
+                                    </div>
+                                    <p>Are you sure you want to reject this event?</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" onclick="closeModal('rejectModal{{ event.id }}')">Cancel</button>
+                                    <button type="submit" class="btn btn-danger">Reject</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+            {% endfor %}
+        </div>
+
+<!-- Pagination Controls -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <a class="page-link" href="#">{{ num }} <span class="sr-only">(current)</span></a>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% else %}
+        <p>No pending events.</p>
+    {% endif %}
+{% endblock %}

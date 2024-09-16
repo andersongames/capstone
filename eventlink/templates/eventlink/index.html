@@ -1,0 +1,107 @@
+{% extends "eventlink/layout.html" %}
+
+{% block title %}Upcoming Events{% endblock %}
+
+{% block body %}
+    <h2>Upcoming Events</h2>
+
+    <h3>Today's events: {{ today_events_count }}</h3>
+
+    {% if page_obj %}
+        <div class="row">
+            {% for event in page_obj %}
+                <div class="col-md-12 mb-3">
+                    <div class="card{% if event.is_today %} card-today{% endif %}">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ event.subject }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">{{ event.date_time|date:"Y-m-d H:i" }}</h6>
+                            <p class="card-text">{{ event.description }}</p>
+                            <p><strong>Requested by:</strong> {{ event.name }} ({{ event.email }})</p>
+                            <p><strong>Location:</strong> {{ event.location }}</p>
+                            <div class="d-flex justify-content-end">
+                                <button class="btn btn-danger" onclick="openModal('cancelModal{{ event.id }}', '{{ event.subject }}', '{{ event.name }}', '{{ event.email }}')">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+    <!-- Cancel Modal -->
+                <div class="modal" id="cancelModal{{ event.id }}">
+                    <div class="modal-backdrop"></div>
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Confirm Cancel Event</h5>
+                                <button type="button" class="close" onclick="closeModal('cancelModal{{ event.id }}')">&times;</button>
+                            </div>
+                            <form method="post" action="{% url 'cancel_event' %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="event_id" value="{{ event.id }}">
+                                <div class="modal-body">
+                                    <p><strong>Event:</strong> <span id="eventNameCancel{{ event.id }}"></span></p>
+                                    <p><strong>Requested by:</strong> <span id="eventOrganizerCancel{{ event.id }}"></span></p>
+                                    <div class="form-group">
+                                        <label for="reason_{{ event.id }}">Reason for Cancel</label>
+                                        <textarea class="form-control" id="reason_{{ event.id }}" name="reason" rows="3" required></textarea>
+                                    </div>
+                                    <p>Are you sure you want to cancel this event?</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" onclick="closeModal('cancelModal{{ event.id }}')">Close</button>
+                                    <button type="submit" class="btn btn-danger">Cancel Event</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+<!-- Pagination Controls -->
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <a class="page-link" href="#">{{ num }} <span class="sr-only">(current)</span></a>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% else %}
+        <p>No upcoming events.</p>
+    {% endif %}
+{% endblock %}
